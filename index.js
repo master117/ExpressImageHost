@@ -42,6 +42,12 @@ app.get('/images', function (req, res) {
     getFiles(directoryPath)
         // On Success
         .then(files => {
+            console.log(files)
+            // Add a / before each file name, replace \\ with /
+            files = files.map(x => {
+                return "/" + x.replace(/\\/g, "/");
+            });
+
             // sending back result
             res.end(JSON.stringify(files));
         })
