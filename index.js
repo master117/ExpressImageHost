@@ -9,10 +9,14 @@
 //////////////////
 // Directory/Path utility module
 const path = require('path');
+// HTTPS
+const https = require('https');
 // File access module
 const fs = require("fs");
 // Webserver
 var express = require('express');
+
+var cors = require('cors');
 
 // Joining path of directory 
 const directoryPath = path.join(__dirname, 'images');
@@ -32,9 +36,13 @@ async function getFiles(dir) {
 
 // Creating webserver instance
 var app = express();
+app.use(cors())
 
-// Serving all files in the images directory
-app.use(express.static('images'))
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 // API GET paths to all images
 app.get('/images', function (req, res) {
@@ -42,7 +50,6 @@ app.get('/images', function (req, res) {
     getFiles(directoryPath)
         // On Success
         .then(files => {
-            console.log(files)
             // Add a / before each file name, replace \\ with /
             files = files.map(x => {
                 return "/" + x.replace(/\\/g, "/");
@@ -55,10 +62,16 @@ app.get('/images', function (req, res) {
         .catch(e => console.error(e));
 })
 
+// Serving all files in the images directory
+app.use(express.static('images'))
+
 // Start Express Server
-var server = app.listen(8081, function () {
+var server = https.createServer({
+    key: fs.readFileSync('./gocke-photo.de-key.pem'),
+    cert: fs.readFileSync('./gocke-photo.de-crt.pem')
+}, app).listen(8081, function () {
     var host = server.address().address
     var port = server.address().port
-    console.log("Webserver is listening at http://%s:%s", host, port)
+    console.log("Webserver is listening at https://%s:%s", host, port)
 })
 
