@@ -65,6 +65,9 @@ app.get('/images', function (req, res) {
 // Serving all files in the images directory
 app.use(express.static('images'))
 
+// Serving all files in the thumbnails directory
+app.use(express.static('thumbnails'))
+
 // Start Express Server
 var server = https.createServer({
     key: fs.readFileSync('./gocke-photo.de-key.pem'),
