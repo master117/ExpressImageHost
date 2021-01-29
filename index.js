@@ -9,17 +9,17 @@
 //////////////////
 // Directory/Path utility module
 const path = require('path');
-// HTTPS
-const https = require('https');
 // File access module
 const fs = require("fs");
 // Webserver
-var express = require('express');
-
-var cors = require('cors');
+const express = require('express');
+// Cors
+const cors = require('cors');
+// Upload
+const fileUpload = require('express-fileupload');
 
 // Joining path of directory 
-const directoryPath = path.join(__dirname, 'images');
+const directoryPath = path.join(__dirname, 'files');
 
 /**
  * Gets all files in directory and subdirectories from given startpoint, all returned paths are relative
@@ -45,7 +45,7 @@ app.use(function(req, res, next) {
 });
 
 // API GET paths to all images
-app.get('/images', function (req, res) {
+app.get('/files', function (req, res) {
     // Get all files, async
     getFiles(directoryPath)
         // On Success
@@ -62,16 +62,33 @@ app.get('/images', function (req, res) {
         .catch(e => console.error(e));
 })
 
+app.use(fileUpload({
+    limits: { fileSize: 50 * 1024 * 1024 },
+  }));
+
+app.post('/upload', function(req, res) {
+    if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).send('No files were uploaded.');
+      }
+    
+      // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+      let sampleFile = req.files.uploadFile;
+    
+      // Use the mv() method to place the file somewhere on your server
+      sampleFile.mv(path.join(__dirname, 'files/' + req.files.uploadFile.name), function(err) {
+        if (err)
+          return res.status(500).send(err);
+    
+        res.send('File uploaded!');
+      });
+  });
+
 // Serving all files in the images directory
 app.use(express.static('images'))
 
 // Start Express Server
-var server = https.createServer({
-    key: fs.readFileSync('./gocke-photo.de-key.pem'),
-    cert: fs.readFileSync('./gocke-photo.de-crt.pem')
-}, app).listen(8081, function () {
-    var host = server.address().address
-    var port = server.address().port
-    console.log("Webserver is listening at https://%s:%s", host, port)
+var port = 8081;
+app.listen(port, function () {
+    console.log("Webserver is listening at %s", port);
 })
 
